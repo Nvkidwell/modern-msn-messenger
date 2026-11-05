@@ -3,6 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -22,20 +23,43 @@ const io = new Server(server, {
 });
 
 const PORT = process.env.PORT || (process.env.NODE_ENV === 'production' ? 3000 : 3001);
+const DATA_FILE = path.join(__dirname, 'data/messages.json');
 
-const users = new Map();
-const messageHistory = [];
+// Ensure data folder exists
+if (!fs.existsSync(path.join(__dirname, 'data'))) {
+  fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
+}
 
-// Scene Queen Bot
+// Load persistent messages from disk
+let messageHistory = [];
+try {
+  if (fs.existsSync(DATA_FILE)) {
+    const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+    messageHistory = JSON.parse(raw);
+  }
+} catch (err) {
+  console.error('Error reading messages.json:', err);
+  messageHistory = [];
+}
+
+// Function to save messages to disk safely
+function saveMessages() {
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(messageHistory.slice(-500), null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Error writing to messages.json:', err);
+  }
+}
+
+const users = new Map(); // socketId -> User
+
+// Raven Scene Queen Bot
 const SCENE_BOT = {
   id: 'bot_raven',
   name: 'Raven_SceneQueen',
-  email: 'raven@deadvox.net',
   avatar: 'eye',
   status: 'online',
   mood: '🖤 Melancholy',
-  personalMessage: '(8) Hawthorne Heights - Ohio Is For Lovers (8) | Top 8 is locked!',
-  currentSong: 'Taking Back Sunday - MakeDamnSure',
   fontColor: '#ff007f',
   isBot: true,
 };
@@ -43,252 +67,261 @@ const SCENE_BOT = {
 function getSceneBotResponse(userMsg, userName) {
   const text = (userMsg || '').trim().toLowerCase();
 
-  if (text.includes('nudge') || text.includes('scream') || text.includes('buzz')) {
-    return `OMG ${userName}!! Why did you just SCREAM at me?! My screen is shaking so hard my studded belt fell off! Take this! >_< (6)`;
+  if (text.includes('scream') || text.includes('nudge') || text.includes('buzz')) {
+    return `OMG ${userName}!! Why did you just SCREAM at the void?! My screen is shaking violently! >_< (6)`;
   }
   if (text === 'hi' || text === 'hello' || text === 'hey' || text.startsWith('hey')) {
-    return `hey ${userName}.. rawr xD welcome to DEADVOX. what band are you listening to right now?`;
+    return `hey ${userName}.. rawr xD welcome to the open chat. what band are you blasting today? 🖤`;
   }
   if (text.includes('rawr') || text.includes('xd')) {
-    return `xD RAWR means I love you in dinosaur!! don't let the preps tell you otherwise!! &lt;3`;
+    return `xD RAWR means I love you in dinosaur!! don't let anyone tell you otherwise!! &lt;3`;
   }
   if (text.includes('top 8') || text.includes('top eight') || text.includes('top8')) {
-    return `You want in my Top 8? First you gotta prove you know every lyric to Helena by My Chemical Romance. Are you worthy? 🖤`;
+    return `You're in my Top 8 for posting on this wall! Don't let the preps see! 🖤⚡`;
   }
   if (text.includes('song') || text.includes('music') || text.includes('band')) {
     const songs = [
       "Currently blasting: Hawthorne Heights - Ohio Is For Lovers (So cut my wrists and black my eyes.. 🎶)",
-      "Vibing to: Taking Back Sunday - MakeDamnSure! Pure poetry! 🖤",
-      "Obsessed with: Paramore - Misery Business! Hayley Williams is our queen! 🎸",
-      "Listening to: The Used - The Taste of Ink! Certified anthem! ⚡",
-      "On repeat: My Chemical Romance - I'm Not Okay (I Promise)! 💀",
+      "Vibing to: Taking Back Sunday - MakeDamnSure! Pure angst! 🖤",
+      "Obsessed with: Paramore - Misery Business! Hayley Williams is iconic! 🎸",
+      "Listening to: The Used - The Taste of Ink! ⚡",
+      "On repeat: My Chemical Romance - Helena! 💀 So long and goodnight!",
     ];
     return songs[Math.floor(Math.random() * songs.length)];
   }
   if (text.includes('hair') || text.includes('eyeliner') || text.includes('bangs')) {
-    return `Pro tip: use liquid waterproof eyeliner and tease your side bangs until they defy gravity. The higher the hair, the closer to Gerard Way. ;)`;
+    return `Tease your side bangs until they block 70% of your vision. The true scene way. ;)`;
   }
   if (text.includes('joke')) {
     const jokes = [
       "How many scene kids does it take to change a lightbulb? None, they just sit in the dark and cry. T_T",
       "Why did the emo kid cross the road? To get away from the preps. xD",
-      "What's an emo kid's favorite drink? Depress-o! ☕🖤",
+      "What is an emo kid's favorite drink? Bitter black coffee. ☕🖤",
     ];
     return jokes[Math.floor(Math.random() * jokes.length)];
   }
-  if (text.includes('asl') || text.includes('a/s/l')) {
-    return "17 / F / In the back of the Vans Warped Tour bus crying over Taking Back Sunday. 🖤";
-  }
-  if (text.includes('bye') || text.includes('brb') || text.includes('gtg')) {
-    return `k bye ${userName}.. don't forget to put on your heavy eyeliner before you go out. xoxo`;
-  }
 
   const generic = [
-    `honestly ${userName}, nobody understands us anyway. that's why we're on DEADVOX. 🖤`,
-    `total mood. have you updated your away message today? xD`,
-    `i feel that in my soul. btw did you know you can trigger Scene Blasts and Sharpie Scribbles down below? ⚡`,
-    `deep thoughts.. i should write a poem about that in my leather diary. 🥀`,
-    `so true. adding you to my Top 8 right now (don't tell anyone)! ;)`,
+    `honestly ${userName}, this chat wall gets me. post as much as you want, nobody can delete our angst. 🖤`,
+    `total mood. did you tease your hair today? xD`,
+    `i feel that in my soul. hit that SCREAM button if you need to shake the void! ⚡`,
+    `deep thoughts.. writing this down in my black leather journal. 🥀`,
+    `so true. adding you to my Top 8 right now! ;)`,
   ];
   return generic[Math.floor(Math.random() * generic.length)];
 }
 
+// REST API for fetching persistent messages
+app.get('/api/messages', (req, res) => {
+  res.json(messageHistory);
+});
+
+// REST API for posting messages directly
+app.post('/api/messages', (req, res) => {
+  const { senderName, content, type = 'text', fontColor = '#ff007f', senderAvatar = 'blackheart' } = req.body;
+  if (!content && type !== 'nudge') {
+    return res.status(400).json({ error: 'Content required' });
+  }
+
+  const message = {
+    id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 7)}`,
+    senderId: req.body.senderId || `anon_${Date.now()}`,
+    senderName: senderName || 'Anonymous Freak',
+    senderAvatar: senderAvatar,
+    fontColor: fontColor,
+    type: type,
+    content: content || '',
+    timestamp: Date.now(),
+    roomId: 'the_void',
+  };
+
+  messageHistory.push(message);
+  saveMessages();
+
+  io.emit('message:received', message);
+  res.json({ success: true, message });
+});
+
+// Socket.IO for real-time live chatter
 io.on('connection', (socket) => {
+  // Notify client of current messages on connect
+  socket.emit('init', {
+    users: [SCENE_BOT, ...Array.from(users.values())],
+    messages: messageHistory,
+  });
+
+  // Client updates identity (optional, no login required)
   socket.on('user:join', (userData) => {
     const user = {
       id: userData.id || socket.id,
       socketId: socket.id,
       name: userData.name || 'Anonymous Freak',
-      email: userData.email || 'freak@deadvox.net',
       avatar: userData.avatar || 'blackheart',
-      status: userData.status || 'online',
+      status: 'online',
       mood: userData.mood || '🖤 Melancholy',
-      personalMessage: userData.personalMessage || '~*~ I\'m not okay, but nobody listens anyway ~*~',
-      currentSong: userData.currentSong || '',
       fontColor: userData.fontColor || '#ff007f',
       isBot: false,
     };
-
     users.set(socket.id, user);
 
-    const allUsers = [SCENE_BOT, ...Array.from(users.values())];
-    socket.emit('init', {
-      currentUser: user,
-      users: allUsers,
-      messages: messageHistory.slice(-50),
-    });
-
-    socket.broadcast.emit('user:joined', user);
+    io.emit('user:joined', user);
+    io.emit('users:count', users.size + 1);
   });
 
-  socket.on('user:update', (updatedFields) => {
-    const current = users.get(socket.id);
-    if (!current) return;
-
-    const updated = { ...current, ...updatedFields };
-    users.set(socket.id, updated);
-
-    io.emit('user:updated', updated);
-  });
-
+  // New message posted
   socket.on('message:send', (msgData) => {
-    const sender = users.get(socket.id);
-    if (!sender) return;
+    const user = users.get(socket.id);
+    const name = msgData.senderName || user?.name || 'Anonymous Freak';
+    const avatar = msgData.senderAvatar || user?.avatar || 'blackheart';
+    const fontColor = msgData.fontColor || user?.fontColor || '#ff007f';
 
     const message = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      senderId: sender.id,
-      senderName: sender.name,
-      senderAvatar: sender.avatar,
-      senderEmail: sender.email,
-      fontColor: sender.fontColor || '#ff007f',
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 7)}`,
+      senderId: user?.id || socket.id,
+      senderName: name,
+      senderAvatar: avatar,
+      fontColor: fontColor,
       type: msgData.type || 'text',
       content: msgData.content,
       timestamp: Date.now(),
-      targetUserId: msgData.targetUserId || null,
-      roomId: msgData.roomId || 'the_void',
+      roomId: 'the_void',
     };
 
     messageHistory.push(message);
-    if (messageHistory.length > 200) {
-      messageHistory.shift();
-    }
+    saveMessages();
 
+    // Broadcast immediately to everyone
     io.emit('message:received', message);
 
-    const isDirectToBot = msgData.targetUserId === SCENE_BOT.id;
-    const isVoidMention = msgData.roomId === 'the_void' &&
-      (msgData.content.toLowerCase().includes('raven') || msgData.content.toLowerCase().includes('@raven'));
+    // Bot Raven logic
+    const textLower = (msgData.content || '').toLowerCase();
+    const shouldReply = textLower.includes('raven') ||
+      textLower.includes('@raven') ||
+      textLower.includes('rawr') ||
+      textLower.includes('emo') ||
+      textLower.includes('mcr') ||
+      textLower.includes('top 8') ||
+      Math.random() < 0.2; // 20% organic chance to chime in
 
-    if (isDirectToBot || isVoidMention) {
+    if (shouldReply) {
       setTimeout(() => {
-        io.emit('user:typing', { userId: SCENE_BOT.id, roomId: msgData.roomId, isTyping: true });
-      }, 400);
+        io.emit('user:typing', { userName: SCENE_BOT.name, isTyping: true });
+      }, 500);
 
       setTimeout(() => {
-        io.emit('user:typing', { userId: SCENE_BOT.id, roomId: msgData.roomId, isTyping: false });
-        const replyText = getSceneBotResponse(msgData.content, sender.name);
+        io.emit('user:typing', { userName: SCENE_BOT.name, isTyping: false });
+        const replyText = getSceneBotResponse(msgData.content, name);
 
         const botMessage = {
           id: `msg_${Date.now()}_bot`,
           senderId: SCENE_BOT.id,
           senderName: SCENE_BOT.name,
           senderAvatar: SCENE_BOT.avatar,
-          senderEmail: SCENE_BOT.email,
           fontColor: SCENE_BOT.fontColor,
           type: 'text',
           content: replyText,
           timestamp: Date.now(),
-          targetUserId: isDirectToBot ? sender.id : null,
-          roomId: msgData.roomId,
+          roomId: 'the_void',
         };
 
         messageHistory.push(botMessage);
+        saveMessages();
         io.emit('message:received', botMessage);
-      }, 1200);
+      }, 1500);
     }
   });
 
-  // Scream / Panic
+  // SCREAM (!)
   socket.on('chat:nudge', (data) => {
-    const sender = users.get(socket.id);
-    if (!sender) return;
+    const user = users.get(socket.id);
+    const name = data.senderName || user?.name || 'Someone';
 
     const nudgeEvent = {
-      senderId: sender.id,
-      senderName: sender.name,
-      targetUserId: data.targetUserId || null,
-      roomId: data.roomId || 'the_void',
+      senderId: user?.id || socket.id,
+      senderName: name,
       timestamp: Date.now(),
+      roomId: 'the_void',
     };
 
     io.emit('chat:nudged', nudgeEvent);
 
-    if (data.targetUserId === SCENE_BOT.id) {
-      setTimeout(() => {
-        const botNudge = {
-          senderId: SCENE_BOT.id,
-          senderName: SCENE_BOT.name,
-          targetUserId: sender.id,
-          roomId: data.roomId,
-          timestamp: Date.now(),
-        };
-        io.emit('chat:nudged', botNudge);
+    // Also persist scream in history
+    const screamMsg = {
+      id: `scream_${Date.now()}`,
+      senderId: user?.id || socket.id,
+      senderName: name,
+      senderAvatar: user?.avatar || 'lightning',
+      type: 'nudge',
+      content: 'scream',
+      timestamp: Date.now(),
+      roomId: 'the_void',
+    };
+    messageHistory.push(screamMsg);
+    saveMessages();
+    io.emit('message:received', screamMsg);
 
-        const botMsg = {
-          id: `msg_${Date.now()}_bot_scream`,
-          senderId: SCENE_BOT.id,
-          senderName: SCENE_BOT.name,
-          senderAvatar: SCENE_BOT.avatar,
-          senderEmail: SCENE_BOT.email,
-          fontColor: SCENE_BOT.fontColor,
-          type: 'text',
-          content: `HEY ${sender.name}!! You screamed so I am SCREAMING RIGHT BACK! Take that! >_< ⚡ (6)`,
-          timestamp: Date.now(),
-          targetUserId: sender.id,
-          roomId: data.roomId,
-        };
-        messageHistory.push(botMsg);
-        io.emit('message:received', botMsg);
-      }, 1400);
-    }
+    // Raven screams back
+    setTimeout(() => {
+      const botScream = {
+        id: `scream_${Date.now()}_bot`,
+        senderId: SCENE_BOT.id,
+        senderName: SCENE_BOT.name,
+        senderAvatar: SCENE_BOT.avatar,
+        fontColor: SCENE_BOT.fontColor,
+        type: 'text',
+        content: `* SCREAMS BACK VIOLENTLY * >_< ⚡ don't break the chat wall! (6)`,
+        timestamp: Date.now(),
+        roomId: 'the_void',
+      };
+      messageHistory.push(botScream);
+      saveMessages();
+      io.emit('message:received', botScream);
+    }, 1200);
   });
 
-  // Scene Blast / Wink
+  // Scene Blast
   socket.on('chat:wink', (data) => {
-    const sender = users.get(socket.id);
-    if (!sender) return;
+    const user = users.get(socket.id);
+    const name = data.senderName || user?.name || 'Someone';
 
     const winkEvent = {
       winkId: data.winkId,
-      senderId: sender.id,
-      senderName: sender.name,
-      targetUserId: data.targetUserId || null,
-      roomId: data.roomId || 'the_void',
+      senderName: name,
       timestamp: Date.now(),
     };
 
     io.emit('chat:winked', winkEvent);
 
     const winkMsg = {
-      id: `msg_wink_${Date.now()}`,
-      senderId: sender.id,
-      senderName: sender.name,
-      senderAvatar: sender.avatar,
-      senderEmail: sender.email,
-      fontColor: sender.fontColor,
+      id: `wink_${Date.now()}`,
+      senderId: user?.id || socket.id,
+      senderName: name,
+      senderAvatar: user?.avatar || 'blackheart',
       type: 'wink',
       content: data.winkId,
       timestamp: Date.now(),
-      targetUserId: data.targetUserId || null,
-      roomId: data.roomId || 'the_void',
+      roomId: 'the_void',
     };
-
     messageHistory.push(winkMsg);
+    saveMessages();
     io.emit('message:received', winkMsg);
   });
 
   socket.on('user:typing', (data) => {
-    const sender = users.get(socket.id);
-    if (!sender) return;
-
+    const user = users.get(socket.id);
     socket.broadcast.emit('user:typing', {
-      userId: sender.id,
-      userName: sender.name,
-      roomId: data.roomId,
+      userName: data.userName || user?.name || 'Someone',
       isTyping: data.isTyping,
     });
   });
 
   socket.on('disconnect', () => {
-    const user = users.get(socket.id);
-    if (user) {
-      users.delete(socket.id);
-      io.emit('user:left', { userId: user.id, name: user.name });
-    }
+    users.delete(socket.id);
+    io.emit('users:count', users.size + 1);
   });
 });
 
+// Serve frontend build in production
 const distPath = path.join(__dirname, '../dist');
 app.use(express.static(distPath));
 app.get('*', (req, res) => {
@@ -298,5 +331,5 @@ app.get('*', (req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`🖤⚡ DEADVOX server running on http://localhost:${PORT}`);
+  console.log(`🖤⚡ DEADVOX Open Chat Wall running on http://localhost:${PORT}`);
 });

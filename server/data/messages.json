@@ -1,0 +1,71 @@
+[
+  {
+    "id": "msg_seed_1",
+    "senderId": "bot_raven",
+    "senderName": "Raven_SceneQueen",
+    "senderAvatar": "eye",
+    "senderEmail": "raven@deadvox.net",
+    "fontColor": "#ff007f",
+    "type": "text",
+    "content": "welcome to DEADVOX.. a place for the misunderstood 🖤 rawr xD",
+    "timestamp": 1730790000000,
+    "roomId": "the_void"
+  },
+  {
+    "id": "msg_seed_2",
+    "senderId": "user_seed_skater",
+    "senderName": "xX_ShadowEcho_Xx",
+    "senderAvatar": "skull",
+    "senderEmail": "shadow@deadvox.net",
+    "fontColor": "#00f0ff",
+    "type": "text",
+    "content": "nobody understands my pain but Hawthorne Heights gets me (8)",
+    "timestamp": 1730790500000,
+    "roomId": "the_void"
+  },
+  {
+    "id": "msg_seed_3",
+    "senderId": "bot_raven",
+    "senderName": "Raven_SceneQueen",
+    "senderAvatar": "eye",
+    "senderEmail": "raven@deadvox.net",
+    "fontColor": "#ff007f",
+    "type": "text",
+    "content": "so cut my wrists and black my eyes.. 🎶 anyone can post here without signing in! just write and scream! ⚡",
+    "timestamp": 1730791000000,
+    "roomId": "the_void"
+  },
+  {
+    "id": "msg_1793887011937_1xjzmoi",
+    "senderId": "anon_1793887011937",
+    "senderName": "TestFreak",
+    "senderAvatar": "blackheart",
+    "fontColor": "#ff007f",
+    "type": "text",
+    "content": "test post to verify persistent disk saving",
+    "timestamp": 1793887011937,
+    "roomId": "the_void"
+  },
+  {
+    "id": "msg_1793887106219_xwwuwxa",
+    "senderId": "Ohxw8AXZZLwr-92tAAAA",
+    "senderName": "panic_at_the_bedroom",
+    "senderAvatar": "lightning",
+    "fontColor": "#ff007f",
+    "type": "text",
+    "content": "test",
+    "timestamp": 1793887106219,
+    "roomId": "the_void"
+  },
+  {
+    "id": "msg_1793887107722_bot",
+    "senderId": "bot_raven",
+    "senderName": "Raven_SceneQueen",
+    "senderAvatar": "eye",
+    "fontColor": "#ff007f",
+    "type": "text",
+    "content": "honestly panic_at_the_bedroom, this chat wall gets me. post as much as you want, nobody can delete our angst. 🖤",
+    "timestamp": 1793887107722,
+    "roomId": "the_void"
+  }
+]

@@ -9,7 +9,13 @@
     overflow: hidden;
     user-select: none;
     -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+    height: 100dvh;
   }
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Custom MSN Messenger Scrollbars */

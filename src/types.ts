@@ -32,7 +32,7 @@ export interface Message {
   senderId: string;
   senderName: string;
   senderAvatar: string;
-  senderEmail: string;
+  senderEmail?: string;
   fontColor?: string;
   type: MessageType;
   content: string; // text message, or image base64, or wink/effect ID
