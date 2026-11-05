@@ -1,25 +1,22 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Message } from '../types';
-import { DEFAULT_AVATARS } from '../utils/avatars';
 import { parseEmoticons } from '../utils/emoticons';
-import { AVAILABLE_WINKS } from '../utils/winks';
-import { Zap, ShieldAlert, Sparkles } from 'lucide-react';
+import { getInitials } from '../utils/avatars';
 
 interface ChatWindowProps {
   messages: Message[];
+  currentUserName: string;
   typingUsers: string[];
-  isNudging: boolean;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   messages,
+  currentUserName,
   typingUsers,
-  isNudging,
 }) => {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
-  // Auto-scroll on new message
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -33,117 +30,78 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
   const formatDate = (ts: number) => {
     const d = new Date(ts);
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    const today = new Date();
+    if (d.toDateString() === today.toDateString()) {
+      return `Today at ${formatTime(ts)}`;
+    }
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   return (
     <div
       ref={scrollRef}
-      className={`flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 bg-gradient-to-b from-black via-zinc-950 to-zinc-900 transition-transform ${
-        isNudging ? 'animate-scream' : ''
-      }`}
+      className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 dark:bg-slate-950"
     >
-      {/* Welcome Banner */}
-      <div className="text-center py-2 px-3 sm:px-4 rounded-xl bg-zinc-900/80 border border-zinc-800 text-xs text-zinc-400 max-w-lg mx-auto font-mono select-none">
-        <div className="font-bold text-rose-400 flex items-center justify-center gap-1 mb-0.5 text-xs sm:text-sm">
-          <ShieldAlert className="w-4 h-4 text-rose-500" />
-          <span>DEADVOX • Permanent Open Chat Wall</span>
+      {/* Empty State */}
+      {messages.length === 0 && (
+        <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
+          No messages yet. Be the first to post!
         </div>
-        <div className="text-[11px] text-zinc-500">
-          All messages are saved permanently. Anyone can post without signing in.
-        </div>
-      </div>
+      )}
 
-      {/* Message Stream */}
-      {messages.map((msg, index) => {
-        const isNudge = msg.type === 'nudge';
-        const isWink = msg.type === 'wink';
-        const isInk = msg.type === 'ink';
-        const isImage = msg.type === 'image';
-        const avatar = DEFAULT_AVATARS.find((a) => a.id === msg.senderAvatar) || DEFAULT_AVATARS[0];
+      {/* Message List */}
+      {messages.map((msg) => {
+        const isMe = msg.senderName.trim().toLowerCase() === currentUserName.trim().toLowerCase();
+        const initials = getInitials(msg.senderName);
+        const avatarBg = msg.avatarColor || '#3b82f6';
 
-        // SCREAM Event Banner
-        if (isNudge) {
-          return (
-            <div
-              key={msg.id}
-              className="my-2 py-2 px-3 rounded-xl bg-rose-950/80 border border-rose-600 text-rose-300 text-xs font-extrabold flex items-center justify-center space-x-2 shadow-[0_0_15px_rgba(244,63,94,0.4)] animate-bounce-in font-mono"
-            >
-              <Zap className="w-4 h-4 fill-rose-500 animate-pulse flex-shrink-0" />
-              <span className="truncate">
-                — {msg.senderName} JUST SCREAMED! —
-              </span>
-              <span className="text-[10px] text-rose-400/80 font-normal ml-1 flex-shrink-0">
-                {formatTime(msg.timestamp)}
-              </span>
-            </div>
-          );
-        }
-
-        // Scene Blast Event Banner
-        if (isWink) {
-          const winkData = AVAILABLE_WINKS.find((w) => w.id === msg.content);
-          return (
-            <div
-              key={msg.id}
-              className="my-2 py-2 px-3 rounded-xl bg-purple-950/70 border border-fuchsia-500/50 text-fuchsia-300 text-xs font-bold flex items-center justify-center space-x-2 shadow-[0_0_10px_rgba(217,70,239,0.3)] font-mono"
-            >
-              <span className="text-base sm:text-lg flex-shrink-0">{winkData?.icon || '⚡'}</span>
-              <span className="truncate">
-                {msg.senderName} triggered Scene Blast: "{winkData?.name || 'Blast'}"
-              </span>
-              <span className="text-[10px] text-fuchsia-400 font-normal ml-1 flex-shrink-0">
-                {formatTime(msg.timestamp)}
-              </span>
-            </div>
-          );
-        }
-
-        // Standard Message Item
         return (
           <div
             key={msg.id}
-            className="flex items-start space-x-2.5 sm:space-x-3 group animate-bounce-in"
+            className={`flex items-start space-x-3 group ${
+              isMe ? 'flex-row-reverse space-x-reverse' : ''
+            }`}
           >
-            {/* Avatar badge */}
-            <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gradient-to-br ${avatar.bgGradient} flex items-center justify-center text-base sm:text-lg flex-shrink-0 shadow-md border border-zinc-800 mt-0.5`}>
-              <span>{avatar.emoji}</span>
+            {/* Avatar Circle */}
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-xs flex-shrink-0 mt-0.5"
+              style={{ backgroundColor: avatarBg }}
+            >
+              {initials}
             </div>
 
-            {/* Content container */}
-            <div className="flex-1 min-w-0">
-              {/* Header: <Name> writes: [time] */}
-              <div className="flex items-baseline space-x-1.5 text-xs font-mono">
-                <span
-                  style={{ color: msg.fontColor || '#ff007f' }}
-                  className="font-bold truncate max-w-[140px] sm:max-w-xs"
-                >
-                  &lt;{msg.senderName}&gt;
+            {/* Bubble Container */}
+            <div className={`max-w-[80%] sm:max-w-[70%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+              {/* Header: Sender & Time */}
+              <div className="flex items-center space-x-2 text-xs text-slate-500 dark:text-slate-400 mb-1 px-1">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  {msg.senderName}
                 </span>
-                <span className="text-zinc-600 text-[10px]">
-                  {formatDate(msg.timestamp)} {formatTime(msg.timestamp)}
+                <span className="text-[11px] text-slate-400">
+                  {formatDate(msg.timestamp)}
                 </span>
               </div>
 
-              {/* Message content */}
-              <div className="mt-0.5 text-sm sm:text-base text-zinc-100 break-words leading-relaxed">
-                {isInk || isImage ? (
-                  <div className="mt-1">
+              {/* Message Box */}
+              <div
+                className={`rounded-2xl px-4 py-2.5 text-sm sm:text-base break-words shadow-xs ${
+                  isMe
+                    ? 'bg-blue-600 text-white rounded-tr-xs'
+                    : 'bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-tl-xs'
+                }`}
+              >
+                {msg.type === 'image' ? (
+                  <div>
                     <img
                       src={msg.content}
-                      alt="Doodle"
+                      alt="Attachment"
                       onClick={() => setLightboxImage(msg.content)}
-                      className="max-h-56 sm:max-h-64 rounded-xl border border-zinc-700 shadow-md cursor-zoom-in hover:opacity-95 transition"
+                      className="max-h-64 rounded-xl cursor-zoom-in hover:opacity-95 transition"
                     />
-                    <span className="text-[10px] text-zinc-500 font-mono block mt-0.5">
-                      {isInk ? 'Sharpie Scribble' : 'Image attachment'} (Tap to enlarge)
-                    </span>
+                    <span className="text-[11px] opacity-70 block mt-1">Click to view full image</span>
                   </div>
                 ) : (
-                  <p
-                    style={{ color: msg.fontColor || 'inherit' }}
-                    className="whitespace-pre-wrap select-text font-msn"
-                  >
+                  <p className="whitespace-pre-wrap leading-relaxed select-text">
                     {parseEmoticons(msg.content)}
                   </p>
                 )}
@@ -153,12 +111,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         );
       })}
 
-      {/* Real-time typing notification */}
+      {/* Typing indicator */}
       {typingUsers.length > 0 && (
-        <div className="flex items-center space-x-2 text-xs italic text-rose-400/80 animate-pulse py-1 font-mono">
-          <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+        <div className="flex items-center space-x-2 text-xs text-slate-400 italic py-1 px-2">
+          <div className="flex space-x-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce" />
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.2s]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.4s]" />
+          </div>
           <span>
-            {typingUsers.join(', ')} {typingUsers.length > 1 ? 'are' : 'is'} writing...
+            {typingUsers.join(', ')} {typingUsers.length > 1 ? 'are' : 'is'} typing...
           </span>
         </div>
       )}
@@ -167,12 +129,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       {lightboxImage && (
         <div
           onClick={() => setLightboxImage(null)}
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-3 cursor-zoom-out backdrop-blur-xs"
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 cursor-zoom-out"
         >
           <img
             src={lightboxImage}
             alt="Full size"
-            className="max-w-full max-h-full rounded-2xl shadow-2xl border-2 border-rose-500/50"
+            className="max-w-full max-h-full rounded-2xl shadow-2xl"
           />
         </div>
       )}

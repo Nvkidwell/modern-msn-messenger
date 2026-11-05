@@ -1,71 +1,34 @@
 [
   {
-    "id": "msg_seed_1",
-    "senderId": "bot_raven",
-    "senderName": "Raven_SceneQueen",
-    "senderAvatar": "eye",
-    "senderEmail": "raven@deadvox.net",
-    "fontColor": "#ff007f",
-    "type": "text",
-    "content": "welcome to DEADVOX.. a place for the misunderstood 🖤 rawr xD",
+    "id": "msg_welcome",
+    "senderName": "System",
+    "content": "Welcome to OpenChat! An open messaging board for anyone on the web. No login needed, all posts are saved permanently.",
     "timestamp": 1730790000000,
-    "roomId": "the_void"
+    "type": "text",
+    "avatarColor": "#3b82f6"
   },
   {
-    "id": "msg_seed_2",
-    "senderId": "user_seed_skater",
-    "senderName": "xX_ShadowEcho_Xx",
-    "senderAvatar": "skull",
-    "senderEmail": "shadow@deadvox.net",
-    "fontColor": "#00f0ff",
+    "id": "msg_sample_1",
+    "senderName": "Alex",
+    "content": "Hey everyone! Glad to see this is up and running.",
+    "timestamp": 1730790300000,
     "type": "text",
-    "content": "nobody understands my pain but Hawthorne Heights gets me (8)",
-    "timestamp": 1730790500000,
-    "roomId": "the_void"
+    "avatarColor": "#10b981"
   },
   {
-    "id": "msg_seed_3",
-    "senderId": "bot_raven",
-    "senderName": "Raven_SceneQueen",
-    "senderAvatar": "eye",
-    "senderEmail": "raven@deadvox.net",
-    "fontColor": "#ff007f",
+    "id": "msg_sample_2",
+    "senderName": "Jordan",
+    "content": "Super clean. Love how fast it loads on mobile.",
+    "timestamp": 1730790600000,
     "type": "text",
-    "content": "so cut my wrists and black my eyes.. 🎶 anyone can post here without signing in! just write and scream! ⚡",
-    "timestamp": 1730791000000,
-    "roomId": "the_void"
+    "avatarColor": "#8b5cf6"
   },
   {
-    "id": "msg_1793887011937_1xjzmoi",
-    "senderId": "anon_1793887011937",
-    "senderName": "TestFreak",
-    "senderAvatar": "blackheart",
-    "fontColor": "#ff007f",
+    "id": "msg_1793887573008_863hn68",
+    "senderName": "Taylor",
+    "content": "Hello world! Testing post persistence.",
+    "timestamp": 1793887573008,
     "type": "text",
-    "content": "test post to verify persistent disk saving",
-    "timestamp": 1793887011937,
-    "roomId": "the_void"
-  },
-  {
-    "id": "msg_1793887106219_xwwuwxa",
-    "senderId": "Ohxw8AXZZLwr-92tAAAA",
-    "senderName": "panic_at_the_bedroom",
-    "senderAvatar": "lightning",
-    "fontColor": "#ff007f",
-    "type": "text",
-    "content": "test",
-    "timestamp": 1793887106219,
-    "roomId": "the_void"
-  },
-  {
-    "id": "msg_1793887107722_bot",
-    "senderId": "bot_raven",
-    "senderName": "Raven_SceneQueen",
-    "senderAvatar": "eye",
-    "fontColor": "#ff007f",
-    "type": "text",
-    "content": "honestly panic_at_the_bedroom, this chat wall gets me. post as much as you want, nobody can delete our angst. 🖤",
-    "timestamp": 1793887107722,
-    "roomId": "the_void"
+    "avatarColor": "#3b82f6"
   }
 ]

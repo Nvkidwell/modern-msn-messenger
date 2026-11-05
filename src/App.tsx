@@ -1,40 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Message, ToastNotification } from './types';
+import { Message } from './types';
 import { Header } from './components/Header';
 import { ChatWindow } from './components/ChatWindow';
 import { MessageInput } from './components/MessageInput';
-import { InkCanvas } from './components/InkCanvas';
-import { WinkPlayer } from './components/WinkPlayer';
-import { ToastAlert } from './components/ToastAlert';
-import { SCENE_USERNAMES, DEFAULT_AVATARS } from './utils/avatars';
+import { getRandomName, getRandomColor } from './utils/avatars';
 
 export const App: React.FC = () => {
-  // User handle (stored in localStorage, zero login or persona required)
+  // Theme state
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    return localStorage.getItem('openchat_theme') === 'dark';
+  });
+
+  // User identity (saved in localStorage, no login required)
   const [userName, setUserName] = useState<string>(() => {
-    const saved = localStorage.getItem('deadvox_username');
+    const saved = localStorage.getItem('openchat_username');
     if (saved) return saved;
-    const random = SCENE_USERNAMES[Math.floor(Math.random() * SCENE_USERNAMES.length)];
-    localStorage.setItem('deadvox_username', random);
+    const random = getRandomName();
+    localStorage.setItem('openchat_username', random);
     return random;
   });
 
-  const [userAvatar, setUserAvatar] = useState<string>(() => {
-    const saved = localStorage.getItem('deadvox_avatar');
+  const [avatarColor] = useState<string>(() => {
+    const saved = localStorage.getItem('openchat_avatar_color');
     if (saved) return saved;
-    const random = DEFAULT_AVATARS[Math.floor(Math.random() * DEFAULT_AVATARS.length)].id;
-    localStorage.setItem('deadvox_avatar', random);
-    return random;
-  });
-
-  const [fontColor, setFontColor] = useState<string>(() => {
-    return localStorage.getItem('deadvox_font_color') || '#ff007f';
+    const color = getRandomColor();
+    localStorage.setItem('openchat_avatar_color', color);
+    return color;
   });
 
   // Persistent messages state (cached in localStorage + synced with server disk)
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
-      const cached = localStorage.getItem('deadvox_messages_cache');
+      const cached = localStorage.getItem('openchat_messages');
       if (cached) return JSON.parse(cached);
     } catch {}
     return [];
@@ -42,78 +40,93 @@ export const App: React.FC = () => {
 
   const [onlineCount, setOnlineCount] = useState<number>(1);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
-  const [isNudging, setIsNudging] = useState<boolean>(false);
-  const [nudgeCooldown, setNudgeCooldown] = useState<number>(0);
-  const [activeWink, setActiveWink] = useState<{ winkId: string; senderName: string } | null>(null);
-  const [isInkOpen, setIsInkOpen] = useState<boolean>(false);
-  const [toasts, setToasts] = useState<ToastNotification[]>([]);
 
   const socketRef = useRef<Socket | null>(null);
   const broadcastRef = useRef<BroadcastChannel | null>(null);
 
-  // Scream cooldown timer
+  // Sync theme
   useEffect(() => {
-    if (nudgeCooldown <= 0) return;
-    const interval = setInterval(() => {
-      setNudgeCooldown((prev) => Math.max(0, prev - 1));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [nudgeCooldown]);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('openchat_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('openchat_theme', 'light');
+    }
+  }, [isDark]);
 
-  // Persist messages cache in localStorage whenever updated
+  // Persist messages in localStorage whenever updated
   useEffect(() => {
     if (messages.length > 0) {
       try {
-        localStorage.setItem('deadvox_messages_cache', JSON.stringify(messages.slice(-300)));
-      } catch {}
+        localStorage.setItem('openchat_messages', JSON.stringify(messages.slice(-500)));
+      } catch (err) {
+        console.error('Failed to cache messages to localStorage:', err);
+      }
     }
   }, [messages]);
 
-  // Fetch persistent messages from server REST API on load
-  useEffect(() => {
+  // Helper to safely append unique messages
+  const appendMessage = (message: Message) => {
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === message.id)) return prev;
+      const updated = [...prev, message].sort((a, b) => a.timestamp - b.timestamp);
+      try {
+        localStorage.setItem('openchat_messages', JSON.stringify(updated.slice(-500)));
+      } catch {}
+      return updated;
+    });
+  };
+
+  // 1. Fetch persistent messages from server REST API on load
+  const fetchServerMessages = () => {
     fetch('/api/messages')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('Network error');
+        return res.json();
+      })
       .then((serverMessages: Message[]) => {
-        if (Array.isArray(serverMessages) && serverMessages.length > 0) {
+        if (Array.isArray(serverMessages)) {
           setMessages((prev) => {
             const map = new Map<string, Message>();
             prev.forEach((m) => map.set(m.id, m));
             serverMessages.forEach((m) => map.set(m.id, m));
-            return Array.from(map.values()).sort((a, b) => a.timestamp - b.timestamp);
+            const merged = Array.from(map.values()).sort((a, b) => a.timestamp - b.timestamp);
+            try {
+              localStorage.setItem('openchat_messages', JSON.stringify(merged.slice(-500)));
+            } catch {}
+            return merged;
           });
         }
       })
-      .catch((err) => console.log('Could not fetch /api/messages:', err));
+      .catch((err) => console.log('Notice: /api/messages fetch status:', err.message));
+  };
+
+  useEffect(() => {
+    fetchServerMessages();
   }, []);
 
-  // Socket & BroadcastChannel setup
+  // 2. Real-time WebSockets & Multi-Tab Broadcast setup
   useEffect(() => {
-    const bc = new BroadcastChannel('deadvox_open_bus');
+    const bc = new BroadcastChannel('openchat_channel');
     broadcastRef.current = bc;
 
     bc.onmessage = (event) => {
       const { type, payload } = event.data;
       if (type === 'message') {
         appendMessage(payload);
-      } else if (type === 'nudge') {
-        triggerScream(payload.senderName);
-      } else if (type === 'wink') {
-        setActiveWink({ winkId: payload.winkId, senderName: payload.senderName });
       }
     };
 
     const socket = io(window.location.origin, {
       transports: ['websocket', 'polling'],
-      reconnectionAttempts: 10,
+      reconnectionAttempts: 15,
+      reconnectionDelay: 1000,
     });
     socketRef.current = socket;
 
     socket.on('connect', () => {
-      socket.emit('user:join', {
-        name: userName,
-        avatar: userAvatar,
-        fontColor: fontColor,
-      });
+      fetchServerMessages();
     });
 
     socket.on('init', (data) => {
@@ -125,8 +138,8 @@ export const App: React.FC = () => {
           return Array.from(map.values()).sort((a, b) => a.timestamp - b.timestamp);
         });
       }
-      if (data.users) {
-        setOnlineCount(data.users.length);
+      if (data.onlineCount) {
+        setOnlineCount(data.onlineCount);
       }
     });
 
@@ -134,29 +147,17 @@ export const App: React.FC = () => {
       setOnlineCount(count);
     });
 
-    socket.on('user:joined', (user) => {
-      showToast(`${user.name} joined the wall.`, 'New Freak', user.avatar);
-    });
-
     socket.on('message:received', (message: Message) => {
       appendMessage(message);
     });
 
-    socket.on('chat:nudged', (nudgeData) => {
-      triggerScream(nudgeData.senderName);
-    });
-
-    socket.on('chat:winked', (winkData) => {
-      setActiveWink({ winkId: winkData.winkId, senderName: winkData.senderName });
-    });
-
-    socket.on('user:typing', (data) => {
-      if (data.userName === userName) return;
+    socket.on('user:typing', (data: { senderName: string; isTyping: boolean }) => {
+      if (data.senderName === userName) return;
       setTypingUsers((prev) => {
-        if (data.isTyping && !prev.includes(data.userName)) {
-          return [...prev, data.userName];
+        if (data.isTyping && !prev.includes(data.senderName)) {
+          return [...prev, data.senderName];
         } else if (!data.isTyping) {
-          return prev.filter((u) => u !== data.userName);
+          return prev.filter((u) => u !== data.senderName);
         }
         return prev;
       });
@@ -166,189 +167,90 @@ export const App: React.FC = () => {
       socket.disconnect();
       bc.close();
     };
-  }, [userName, userAvatar, fontColor]);
+  }, [userName]);
 
-  const showToast = (message: string, title: string = 'DEADVOX Alert', avatar?: string) => {
-    const id = `toast_${Date.now()}_${Math.random()}`;
-    const newToast: ToastNotification = { id, title, message, avatar, timestamp: Date.now() };
-    setToasts((prev) => [...prev.slice(-3), newToast]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 4000);
-  };
-
-  const appendMessage = (message: Message) => {
-    setMessages((prev) => {
-      if (prev.some((m) => m.id === message.id)) return prev;
-      return [...prev, message];
-    });
-  };
-
-  const triggerScream = (senderName: string) => {
-    setIsNudging(true);
-    setTimeout(() => setIsNudging(false), 800);
-  };
-
-  // Name update & shuffle
+  // Handle display name change
   const handleUpdateUserName = (newName: string) => {
-    const trimmed = newName.trim() || 'Anonymous';
+    const trimmed = newName.trim() || getRandomName();
     setUserName(trimmed);
-    localStorage.setItem('deadvox_username', trimmed);
-    if (socketRef.current?.connected) {
-      socketRef.current.emit('user:join', { name: trimmed, avatar: userAvatar, fontColor });
-    }
+    localStorage.setItem('openchat_username', trimmed);
   };
 
   const handleShuffleName = () => {
-    const random = SCENE_USERNAMES[Math.floor(Math.random() * SCENE_USERNAMES.length)];
-    handleUpdateUserName(random);
+    const newName = getRandomName();
+    handleUpdateUserName(newName);
   };
 
-  // Font color update
-  const handleUpdateFontColor = (color: string) => {
-    setFontColor(color);
-    localStorage.setItem('deadvox_font_color', color);
-  };
+  // Send message: GUARANTEED PERSISTENCE via Socket + REST API + LocalStorage
+  const handleSendMessage = async (content: string, type: 'text' | 'image' = 'text') => {
+    if (!content.trim()) return;
 
-  // Post message (saves to server REST + WebSocket + Local Cache)
-  const handleSendMessage = (content: string, type: 'text' | 'image' = 'text') => {
-    const messagePayload = {
+    const newMsg: Message = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 7)}`,
       senderName: userName,
-      senderAvatar: userAvatar,
-      fontColor: fontColor,
+      content: content.trim(),
+      timestamp: Date.now(),
       type: type,
-      content: content,
-      roomId: 'the_void',
+      avatarColor: avatarColor,
     };
 
+    // 1. Immediately store in local state & localStorage so user never loses it
+    appendMessage(newMsg);
+
+    // 2. Broadcast across tabs immediately
+    broadcastRef.current?.postMessage({ type: 'message', payload: newMsg });
+
+    // 3. Send to Server via Socket.IO if connected
     if (socketRef.current?.connected) {
-      socketRef.current.emit('message:send', messagePayload);
-    } else {
-      // POST directly via HTTP REST API
-      fetch('/api/messages', {
+      socketRef.current.emit('message:send', newMsg);
+    }
+
+    // 4. ALSO POST to REST API to ensure permanent disk write in server/data/messages.json
+    try {
+      await fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(messagePayload),
-      }).catch((err) => console.log('Error posting message:', err));
-
-      // Append locally
-      const localMsg: Message = {
-        id: `msg_local_${Date.now()}`,
-        senderId: `anon_${Date.now()}`,
-        senderName: userName,
-        senderAvatar: userAvatar,
-        fontColor: fontColor,
-        type: type,
-        content: content,
-        timestamp: Date.now(),
-        roomId: 'the_void',
-      };
-      appendMessage(localMsg);
-      broadcastRef.current?.postMessage({ type: 'message', payload: localMsg });
+        body: JSON.stringify(newMsg),
+      });
+    } catch (err) {
+      console.log('Saved locally (network background sync):', err);
     }
-  };
-
-  // SCREAM (!)
-  const handleSendNudge = () => {
-    if (nudgeCooldown > 0) return;
-    setNudgeCooldown(4);
-    setIsNudging(true);
-    setTimeout(() => setIsNudging(false), 800);
-
-    const payload = {
-      senderName: userName,
-      timestamp: Date.now(),
-      roomId: 'the_void',
-    };
-
-    if (socketRef.current?.connected) {
-      socketRef.current.emit('chat:nudge', payload);
-    } else {
-      broadcastRef.current?.postMessage({ type: 'nudge', payload });
-    }
-  };
-
-  // Scene Blast
-  const handleSendWink = (winkId: string) => {
-    setActiveWink({ winkId, senderName: userName });
-
-    const payload = {
-      winkId,
-      senderName: userName,
-      timestamp: Date.now(),
-      roomId: 'the_void',
-    };
-
-    if (socketRef.current?.connected) {
-      socketRef.current.emit('chat:wink', payload);
-    } else {
-      broadcastRef.current?.postMessage({ type: 'wink', payload });
-    }
-  };
-
-  // Scribble Graffiti
-  const handleSendInk = (imageDataUrl: string) => {
-    handleSendMessage(imageDataUrl, 'image');
   };
 
   const handleTyping = (isTyping: boolean) => {
     if (!socketRef.current?.connected) return;
     socketRef.current.emit('user:typing', {
-      userName: userName,
+      senderName: userName,
       isTyping: isTyping,
     });
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-black font-msn text-zinc-100 select-none">
-      {/* Mobile-Friendly Header */}
+    <div className="flex flex-col h-[100dvh] w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans antialiased">
+      {/* Header */}
       <Header
         onlineCount={onlineCount}
         userName={userName}
         onShuffleName={handleShuffleName}
+        isDark={isDark}
+        onToggleTheme={() => setIsDark(!isDark)}
       />
 
-      {/* Main Open Chat Stream (The Void) */}
-      <main className="flex-1 overflow-hidden flex flex-col w-full max-w-4xl mx-auto bg-zinc-950 sm:border-x sm:border-zinc-800 shadow-2xl relative">
+      {/* Main Chat Stream Container */}
+      <main className="flex-1 overflow-hidden flex flex-col w-full max-w-3xl mx-auto bg-white dark:bg-slate-900 sm:border-x border-slate-200 dark:border-slate-800 sm:shadow-lg relative">
         <ChatWindow
           messages={messages}
+          currentUserName={userName}
           typingUsers={typingUsers}
-          isNudging={isNudging}
         />
 
         <MessageInput
           userName={userName}
           onChangeUserName={handleUpdateUserName}
-          onShuffleUserName={handleShuffleName}
           onSendMessage={handleSendMessage}
-          onSendNudge={handleSendNudge}
-          onSendWink={handleSendWink}
-          onOpenInk={() => setIsInkOpen(true)}
           onTyping={handleTyping}
-          fontColor={fontColor}
-          onChangeFontColor={handleUpdateFontColor}
-          nudgeCooldown={nudgeCooldown}
         />
       </main>
-
-      {/* Sharpie Scribble Graffiti Canvas Modal */}
-      <InkCanvas
-        isOpen={isInkOpen}
-        onClose={() => setIsInkOpen(false)}
-        onSendInk={handleSendInk}
-      />
-
-      {/* Scene Blast Overlay (Silent) */}
-      <WinkPlayer
-        activeWink={activeWink}
-        onFinished={() => setActiveWink(null)}
-      />
-
-      {/* Toast Alerts (Silent) */}
-      <ToastAlert
-        toasts={toasts}
-        onDismiss={(id) => setToasts((prev) => prev.filter((t) => t.id !== id))}
-      />
     </div>
   );
 };

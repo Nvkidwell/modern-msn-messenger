@@ -1,56 +1,66 @@
 import React from 'react';
-import { Skull, Radio, Users } from 'lucide-react';
+import { MessageSquare, Users, Moon, Sun, RefreshCw } from 'lucide-react';
 
 interface HeaderProps {
   onlineCount: number;
   userName: string;
   onShuffleName: () => void;
+  isDark: boolean;
+  onToggleTheme: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onlineCount, userName, onShuffleName }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onlineCount,
+  userName,
+  onShuffleName,
+  isDark,
+  onToggleTheme,
+}) => {
   return (
-    <header className="h-12 bg-gradient-to-r from-zinc-950 via-slate-900 to-black text-white flex items-center justify-between px-3 md:px-4 select-none shadow-xl border-b border-rose-500/30 flex-shrink-0 z-20">
-      {/* Brand & Rawr Heart */}
-      <div className="flex items-center space-x-2">
-        <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-rose-950/60 border border-rose-500/40 shadow-inner">
-          <span className="text-lg">🖤</span>
-          <span className="absolute -top-1 -right-1 text-[10px]">⚡</span>
+    <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between select-none shadow-xs flex-shrink-0 z-20">
+      {/* Brand */}
+      <div className="flex items-center space-x-2.5">
+        <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm">
+          <MessageSquare className="w-5 h-5" />
         </div>
-
-        <div className="flex flex-col">
-          <div className="flex items-baseline space-x-1.5">
-            <span className="font-extrabold tracking-wider text-sm md:text-base bg-gradient-to-r from-rose-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
-              DEADVOX
-            </span>
-            <span className="text-[10px] text-zinc-400 font-mono hidden sm:inline">
-              • Open Chat Wall
+        <div>
+          <div className="flex items-center space-x-2">
+            <h1 className="font-bold text-base text-slate-900 dark:text-white tracking-tight">
+              OpenChat
+            </h1>
+            <span className="flex items-center space-x-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>{onlineCount} online</span>
             </span>
           </div>
-          <span className="text-[9px] text-zinc-500 font-mono -mt-0.5 sm:hidden">
-            Open Chat • No Login
-          </span>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
+            Simple public messaging • All posts saved permanently
+          </p>
         </div>
       </div>
 
-      {/* Center status pill */}
-      <div className="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">
-        <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse" />
-        <span className="hidden xs:inline">Live:</span>
-        <span className="font-bold text-emerald-400">{onlineCount}</span>
-        <span className="hidden sm:inline text-zinc-500">freaks</span>
-      </div>
-
-      {/* Right: Quick Name tag & Shuffle */}
+      {/* Right controls */}
       <div className="flex items-center space-x-2">
+        {/* Name pill */}
         <button
           onClick={onShuffleName}
-          className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-500/30 text-xs font-mono transition active:scale-95 hover:shadow-[0_0_10px_rgba(244,63,94,0.3)]"
-          title="Click to roll a new scene name"
+          className="flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 transition"
+          title="Click to change your display name"
         >
-          <span className="text-[11px] font-bold truncate max-w-[110px] sm:max-w-[160px]">
+          <span className="text-slate-400 text-[11px]">You:</span>
+          <span className="font-semibold text-slate-900 dark:text-slate-100 max-w-[100px] truncate">
             {userName}
           </span>
-          <span className="text-[10px] opacity-70">🎲</span>
+          <RefreshCw className="w-3 h-3 text-slate-400" />
+        </button>
+
+        {/* Theme toggle */}
+        <button
+          onClick={onToggleTheme}
+          className="p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
         </button>
       </div>
     </header>
