@@ -1,34 +1,18 @@
 [
   {
-    "id": "msg_welcome",
-    "senderName": "System",
-    "content": "Welcome to OpenChat! An open messaging board for anyone on the web. No login needed, all posts are saved permanently.",
-    "timestamp": 1730790000000,
+    "id": "msg_notice",
+    "senderName": "Nick",
+    "content": "Messaging back is not working right now. I'm working on it.",
+    "timestamp": 1793888340000,
     "type": "text",
     "avatarColor": "#3b82f6"
   },
   {
-    "id": "msg_sample_1",
-    "senderName": "Alex",
-    "content": "Hey everyone! Glad to see this is up and running.",
-    "timestamp": 1730790300000,
+    "id": "msg_letter",
+    "senderName": "Nick",
+    "content": "Fee,\n\nI want to start by saying this wasn’t easy for me. Ending things with you was one of the hardest things I’ve ever done, and I’m still not okay. I’m writing this because I need you to understand why, not because I want to argue or win anything.\n\nI was all in. I made arrangements. I told my wife I was leaving. Every step I took was my way of showing you how serious I was about us. But I never saw those steps coming back from you. You didn’t talk to Andy. You didn’t make plans. I kept waiting for some sign that you were moving toward me too, and when it didn’t come, I started to believe it meant you didn’t love me the way I loved you.\n\nAnd slowly, I became a secret. I was pretending to be someone I wasn’t so you could keep your life the way it was. I was the one taking every step, and I was still the one hiding. When you signed the new lease, something in me finally broke.\n\nBut it was never just about the lease. Somewhere along the way I had to be honest with myself. What we were doing was wrong. That’s not the way love is supposed to come into the world. It was always going to blow up, and when it did, it would have hurt so many more people than just us.\n\nEspecially your daughter. She was catching on. She knew. When you hinted at it with her, she told you she would hate us. Then two weeks before I ended things, she saw that text I sent you. It was stupid and careless and that’s on me. That’s what happens with secrets. We get sloppy, and everything falls apart. She would have hated both of us, and if someone has to carry that, I’d rather it be me. I couldn’t watch that devastate her. And I couldn’t watch your family hold it over you for the rest of your life.\n\nI also need to be honest about something that’s stayed with me. When you said “I think you love me more than I love you” and “I won’t call it quits unless you do,” it hurt more than I ever told you. I felt like I had laid everything out plainly and still wasn’t being heard. Maybe I did love you more. Or maybe you just had so much more to lose. Either way, I didn’t want you to risk everything for me and then resent me for it years from now. I didn’t want us to turn into that.\n\nSo I let you go. Not because I stopped loving you, but because I couldn’t keep loving you in secret. I won’t build love that way again.\n\nI almost didn’t send this. I laid in bed by myself and told myself to just move on, to listen to you and let it go. I deleted the site. It’s gone, no backup, nothing. And then I made this anyway, because there were things I couldn’t leave unsaid.\n\nI know this is one-sided. I know you have so much to say too, and I made this in a way where you can’t. I took your voice, and I’m sorry for that. If you want, I’ll delete this and give up the website name. Just tell me.\n\nI love you, Fee. I hope someday you understand that this was me loving you the only way I had left.\n\nNick",
+    "timestamp": 1793888400000,
     "type": "text",
     "avatarColor": "#10b981"
-  },
-  {
-    "id": "msg_sample_2",
-    "senderName": "Jordan",
-    "content": "Super clean. Love how fast it loads on mobile.",
-    "timestamp": 1730790600000,
-    "type": "text",
-    "avatarColor": "#8b5cf6"
-  },
-  {
-    "id": "msg_1793887573008_863hn68",
-    "senderName": "Taylor",
-    "content": "Hello world! Testing post persistence.",
-    "timestamp": 1793887573008,
-    "type": "text",
-    "avatarColor": "#3b82f6"
   }
 ]
