@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../../Downloads/messenger/migrations"
+		},
+		{
+			"path": "../../../../Downloads/messenger/public"
+		},
+		{
+			"path": "../../../../Downloads/messenger/scripts"
+		},
+		{
+			"path": "../../../../Downloads/messenger/src"
+		},
+		{
+			"path": "../../../../Downloads/messenger/test"
+		}
+	],
+	"settings": {}
+}
